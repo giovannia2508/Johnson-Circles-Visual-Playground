@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A Visual Proof — Johnson's Three-Circle Theorem</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f4efe4; --paper2:#efe8d8; --ink:#211f1a; --muted:#6c665a;
+    --line:#dcd3c1; --accent:#b4512f; --accent2:#1f6b4a;
+    --panel:#15171b; --panel-edge:#2a2d33;
+    --maxw:1080px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:"Newsreader",Georgia,serif; color:var(--ink);
+    background:
+      radial-gradient(120% 80% at 50% -10%, #fbf7ee 0%, var(--paper) 46%, var(--paper2) 100%);
+    min-height:100vh; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:42px 24px 60px;}
+  header{max-width:760px; margin:0 auto 30px; text-align:center;
+    animation:rise .8s cubic-bezier(.2,.7,.2,1) both;}
+  .kicker{font-family:"Newsreader",serif; font-style:italic; letter-spacing:.02em;
+    color:var(--accent); font-size:15px; margin:0 0 14px; text-transform:none;}
+  .kicker::before,.kicker::after{content:"·"; margin:0 .5em; color:var(--muted);}
+  h1.theorem{font-family:"Fraunces",serif; font-weight:600; font-size:clamp(24px,3.4vw,38px);
+    line-height:1.18; margin:0; letter-spacing:-.01em; text-wrap:balance;}
+  .stage{display:grid; grid-template-columns:1fr; gap:26px; align-items:start;
+    animation:rise .8s .12s cubic-bezier(.2,.7,.2,1) both;}
+  @media(min-width:880px){ .stage{grid-template-columns:1.08fr .92fr; gap:34px;} }
+  .figure-panel{
+    background:linear-gradient(160deg,#191c21,#111317); border:1px solid var(--panel-edge);
+    border-radius:18px; padding:14px; position:relative; overflow:hidden;
+    box-shadow:0 18px 40px -22px rgba(20,16,8,.5), inset 0 1px 0 rgba(255,255,255,.04);
+  }
+  .figure-panel::after{content:""; position:absolute; inset:0; pointer-events:none;
+    background:radial-gradient(80% 70% at 50% 40%, transparent 60%, rgba(0,0,0,.35) 100%);}
+  .figure-panel svg{display:block; width:100%; height:auto; position:relative; z-index:1;
+    transition:opacity .28s ease;}
+  /* tabs */
+  .tabs{display:flex; gap:8px; justify-content:center; margin:0 auto 28px;}
+  .tab{font-family:"Fraunces",serif; font-size:15px; font-weight:500; cursor:pointer;
+    background:transparent; color:var(--muted); border:1px solid var(--line);
+    padding:9px 22px; border-radius:999px; transition:all .2s;}
+  .tab:hover{color:var(--ink); border-color:#c9bfa9;}
+  .tab.on{background:var(--ink); color:var(--paper); border-color:var(--ink);}
+  .tab-panel[hidden]{display:none;}
+  .tab-panel{animation:fadein .35s ease both;}
+  /* sandbox controls */
+  .sb-controls{display:flex; flex-direction:column; gap:16px; margin-top:6px;}
+  .sb-row{display:flex; flex-wrap:wrap; gap:10px; align-items:center;}
+  .sb-slider{display:flex; align-items:center; gap:7px;}
+  .sb-swatch{width:12px; height:12px; border-radius:50%; display:inline-block;}
+  input[type=range]{accent-color:var(--accent); width:104px;}
+  .sb-btn{font-family:"Fraunces",serif; font-size:13.5px; font-weight:500; cursor:pointer;
+    background:var(--paper2); color:var(--ink); border:1px solid var(--line);
+    padding:8px 15px; border-radius:999px; transition:all .18s;}
+  .sb-btn:hover{border-color:#c9bfa9; transform:translateY(-1px);}
+  .sb-btn.on{background:rgba(31,107,74,.12); border-color:var(--accent2); color:var(--accent2);}
+  .sb-btn.accent{color:var(--accent); border-color:#e6c3b4;}
+  .sb-check{display:flex; align-items:center; gap:6px; font-size:14px; color:var(--muted); cursor:pointer;}
+  .sb-count{font-size:14px; color:var(--muted);} .sb-count b{color:var(--ink);}
+  .sb-note{font-size:16px; color:#33302a; max-width:46ch; margin:6px 0 0; line-height:1.5;}
+  .sb-note b{color:var(--accent); font-weight:500;}
+  /* footer links + credit */
+  footer a{color:var(--accent); text-decoration:none; border-bottom:1px solid rgba(180,81,47,.35);}
+  footer a:hover{border-bottom-color:var(--accent);}
+  .credit{margin-top:10px; font-style:normal; font-size:13.5px; color:var(--muted);}
+  .credit a{color:var(--muted); border-bottom-color:var(--line);}
+  .resources{margin:10px auto 0; max-width:62ch; line-height:1.6; font-size:13.5px;}
+  .panel{padding-top:4px;}
+  .stepnum{font-family:"Fraunces",serif; display:flex; align-items:baseline; gap:6px; margin-bottom:6px;}
+  .stepnum #snum{font-size:40px; font-weight:600; color:var(--accent); line-height:1;}
+  .stepnum .of{font-size:18px; color:var(--muted);}
+  h2#stitle{font-family:"Fraunces",serif; font-weight:600; font-size:23px; margin:0 0 10px;}
+  p#sdesc{font-size:17.5px; color:#33302a; margin:0; max-width:46ch;}
+  p#sdesc b{color:var(--accent); font-weight:500;}
+  .note{margin-top:18px; border-left:3px solid var(--accent2);
+    background:linear-gradient(180deg,rgba(31,107,74,.07),rgba(31,107,74,.03));
+    border-radius:0 12px 12px 0; padding:14px 16px; animation:fadein .4s ease both;}
+  .note h3{font-family:"Fraunces",serif; font-weight:600; font-size:15.5px; margin:0 0 8px;
+    color:var(--accent2); letter-spacing:.01em;}
+  .note ol{margin:0; padding-left:20px;}
+  .note li{font-size:14.5px; color:#3a372f; margin:0 0 8px;}
+  .note li:last-child{margin-bottom:0;}
+  .note li b{color:var(--accent2); font-weight:600;}
+  .nav{display:flex; align-items:center; gap:14px; margin-top:26px;}
+  button.step-btn{font-family:"Fraunces",serif; font-size:15px; font-weight:500;
+    background:var(--ink); color:var(--paper); border:none; border-radius:999px;
+    padding:9px 18px; cursor:pointer; transition:transform .15s ease, background .2s, opacity .2s;}
+  button.step-btn:hover:not(:disabled){transform:translateY(-1px); background:#000;}
+  button.step-btn:disabled{opacity:.3; cursor:not-allowed;}
+  .dots{display:flex; gap:7px; margin:0 auto;}
+  .dot{width:9px; height:9px; border-radius:50%; background:var(--line); border:none;
+    padding:0; cursor:pointer; transition:transform .2s, background .2s;}
+  .dot.on{background:var(--accent); transform:scale(1.25);}
+  .dot:hover{background:var(--accent);}
+  footer{max-width:760px; margin:46px auto 0; text-align:center; color:var(--muted);
+    font-size:13.5px; font-style:italic; border-top:1px solid var(--line); padding-top:18px;}
+  @keyframes rise{from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:none;}}
+  @keyframes fadein{from{opacity:0;} to{opacity:1;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="kicker">A Visual Proof &nbsp;after Roger Johnson, 1916</p>
+    <h1 class="theorem">If three equal circles pass through a common point, the circle through their other three intersections is equal to each of them.</h1>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab on" id="tab-btn-proof">Walkthrough</button>
+    <button class="tab" id="tab-btn-explore">Interactive sandbox</button>
+  </nav>
+
+  <section id="tab-proof" class="tab-panel">
+  <main class="stage">
+    <div class="figure-panel">
+      <svg id="cv" viewBox="0 0 520 500" role="img" aria-label="Geometric figure for the proof"></svg>
+    </div>
+    <aside class="panel">
+      <div class="stepnum"><span id="snum">1</span><span class="of">/ 8</span></div>
+      <h2 id="stitle"></h2>
+      <p id="sdesc"></p>
+      <div id="note" class="note" hidden>
+        <h3 id="ntitle"></h3>
+        <div id="nbody"></div>
+      </div>
+      <div class="nav">
+        <button class="step-btn" id="prev">&lsaquo;&nbsp;Prev</button>
+        <div class="dots" id="dots"></div>
+        <button class="step-btn" id="next">Next&nbsp;&rsaquo;</button>
+      </div>
+    </aside>
+  </main>
+  </section>
+
+  <section id="tab-explore" class="tab-panel" hidden>
+    <main class="stage">
+      <div class="figure-panel">
+        <svg id="sbcv" viewBox="0 0 560 560" style="touch-action:none;cursor:grab;" role="img" aria-label="Interactive three-circle sandbox"></svg>
+      </div>
+      <aside class="panel">
+        <h2 style="font-family:'Fraunces',serif;font-weight:600;font-size:23px;margin:0 0 4px;">Move the circles</h2>
+        <p style="font-size:17.5px;color:#33302a;margin:0 0 4px;max-width:46ch;">See the theorem live: three equal circles through a point, the circle that wraps them, and the triangle on their outer crossings.</p>
+        <div class="sb-controls">
+          <div class="sb-row">
+            <span class="sb-slider"><span class="sb-swatch" style="background:#5B9BD5"></span><input type="range" min="25" max="150" value="95" id="sb_r0" aria-label="Circle 1 radius"></span>
+            <span class="sb-slider"><span class="sb-swatch" style="background:#42C29A"></span><input type="range" min="25" max="150" value="95" id="sb_r1" aria-label="Circle 2 radius"></span>
+            <span class="sb-slider"><span class="sb-swatch" style="background:#B58BE6"></span><input type="range" min="25" max="150" value="95" id="sb_r2" aria-label="Circle 3 radius"></span>
+          </div>
+          <div class="sb-row">
+            <button class="sb-btn" id="sb_johnson">Johnson setup</button>
+            <button class="sb-btn accent" id="sb_fit">Fit boundary</button>
+            <button class="sb-btn" id="sb_tri">Reference &#9651;</button>
+            <button class="sb-btn" id="sb_reset">Reset</button>
+          </div>
+          <div class="sb-row">
+            <label class="sb-check"><input type="checkbox" id="sb_marks" checked> show intersection marks</label>
+            <span class="sb-count" style="margin-left:auto;">crossings: <b id="sb_cnt">6</b></span>
+          </div>
+          <p class="sb-note">Drag any circle to move it; the red boundary keeps it contained. <b>Johnson setup</b> recreates the theorem's configuration, <b>Fit boundary</b> wraps the red circle tangent to all three, and <b>Reference &#9651;</b> joins the outer crossings into the triangle from the proof.</p>
+        </div>
+      </aside>
+    </main>
+  </section>
+
+  <footer>
+    A visual walkthrough of Johnson's three-circle theorem (1916).
+    <p class="resources">
+      Further reading &amp; resources: the original paper on the
+      <a href="https://archive.org/details/jstor-2974356/page/n1/mode/2up" target="_blank" rel="noopener">Internet Archive</a>;
+      a wonderful video with clear visuals, explanation, and historical context by
+      <a href="https://www.youtube.com/watch?v=l-R29dlK_Wg" target="_blank" rel="noopener">Tom&aacute;&scaron; Mi&scaron;kov</a>;
+      and the <a href="https://en.wikipedia.org/wiki/Johnson_circles" target="_blank" rel="noopener">Wikipedia article on Johnson circles</a>
+      for a deeper dive into the corollaries and further implications.
+    </p>
+    <div class="credit">Built by Giovanni Antonini &middot; <a href="mailto:Giovanni.Antonini@duke.edu">Giovanni.Antonini@duke.edu</a></div>
+  </footer>
+</div>
+
+<script>
+/* ===== tab switching ===== */
+(function(){
+  const panels={proof:document.getElementById('tab-proof'),explore:document.getElementById('tab-explore')};
+  const btns={proof:document.getElementById('tab-btn-proof'),explore:document.getElementById('tab-btn-explore')};
+  function show(w){for(const key in panels){panels[key].hidden=(key!==w); btns[key].classList.toggle('on',key===w);}}
+  btns.proof.addEventListener('click',()=>show('proof'));
+  btns.explore.addEventListener('click',()=>show('explore'));
+})();
+
+/* ===== walkthrough proof ===== */
+(function(){
+/* ---------- geometry ---------- */
+const k=1.2, ox=260, oy=245, r=90;
+const angs=[150,35,270].map(d=>d*Math.PI/180);
+const Cw=angs.map(a=>({x:r*Math.cos(a),y:r*Math.sin(a)}));
+const Ow={x:0,y:0};
+const Pw=[{x:Cw[1].x+Cw[2].x,y:Cw[1].y+Cw[2].y},   // P1 = circles 2&3
+          {x:Cw[2].x+Cw[0].x,y:Cw[2].y+Cw[0].y},   // P2 = circles 3&1
+          {x:Cw[0].x+Cw[1].x,y:Cw[0].y+Cw[1].y}];   // P3 = circles 1&2
+const Sw={x:Cw[0].x+Cw[1].x+Cw[2].x,y:Cw[0].y+Cw[1].y+Cw[2].y};
+const W=p=>({x:ox+p.x*k,y:oy-p.y*k});
+const Cs=Cw.map(W),Os=W(Ow),Ps=Pw.map(W),Ss=W(Sw),rs=r*k;
+
+/* ---------- palette (dark panel) ---------- */
+const CC=['#5B9BD5','#42C29A','#B58BE6'];  // circle 1,2,3
+const OCOL='#F4F1EA', PCOL='#8BD450', GOLD='#F2C14E', HL='#E8A33D';
+const RED='#E5564B', GRY='#C9C4BA', PANEL='#15171b';
+
+/* ---------- svg helpers ---------- */
+function ln(a,b,c,w,d){return `<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke="${c}" stroke-width="${w}"${d?` stroke-dasharray="${d}"`:''} stroke-linecap="round"/>`;}
+function poly(pts,f,fo,c,w){return `<polygon points="${pts.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ')}" fill="${f}" fill-opacity="${fo}" stroke="${c}" stroke-width="${w}" stroke-linejoin="round"/>`;}
+function cir(c,rr,f,fo,col,w,d){return `<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="${rr.toFixed(1)}" fill="${f}"${fo!=null?` fill-opacity="${fo}"`:''} stroke="${col}" stroke-width="${w}"${d?` stroke-dasharray="${d}"`:''}/>`;}
+function dot(c,rr,f){return `<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="${rr}" fill="${f}"/>`;}
+function txt(c,t,col,dx,dy){return `<text x="${(c.x+dx).toFixed(1)}" y="${(c.y+dy).toFixed(1)}" font-size="15" font-weight="600" fill="${col}" font-family="Fraunces, serif" paint-order="stroke" stroke="${PANEL}" stroke-width="3.5">${t}</text>`;}
+function tick(a,b,col){const mx=(a.x+b.x)/2,my=(a.y+b.y)/2;let dx=b.x-a.x,dy=b.y-a.y;const L=Math.hypot(dx,dy)||1;dx/=L;dy/=L;const nx=-dy,ny=dx;return ln({x:mx-nx*5,y:my-ny*5},{x:mx+nx*5,y:my+ny*5},col,2);}
+function tickN(a,b,col,n){let dx=b.x-a.x,dy=b.y-a.y;const L=Math.hypot(dx,dy)||1;dx/=L;dy/=L;const nx=-dy,ny=dx;const mx=(a.x+b.x)/2,my=(a.y+b.y)/2;let s='';for(let i=0;i<n;i++){const off=(i-(n-1)/2)*4.5;const cx=mx+dx*off,cy=my+dy*off;s+=ln({x:cx-nx*5,y:cy-ny*5},{x:cx+nx*5,y:cy+ny*5},col,2);}return s;}
+function arc(V,A,B,rad,col,dbl){
+  let a1=Math.atan2(A.y-V.y,A.x-V.x),a2=Math.atan2(B.y-V.y,B.x-V.x);
+  let diff=a2-a1; while(diff<=-Math.PI)diff+=2*Math.PI; while(diff>Math.PI)diff-=2*Math.PI;
+  const sweep=diff>0?1:0; let s='';
+  for(const rr of (dbl?[rad,rad-4]:[rad])){
+    const p1={x:V.x+rr*Math.cos(a1),y:V.y+rr*Math.sin(a1)};
+    const p2={x:V.x+rr*Math.cos(a2),y:V.y+rr*Math.sin(a2)};
+    s+=`<path d="M ${p1.x.toFixed(1)} ${p1.y.toFixed(1)} A ${rr} ${rr} 0 0 ${sweep} ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}" fill="none" stroke="${col}" stroke-width="2"/>`;
+  }
+  return s;
+}
+function outw(p,o,d){let dx=p.x-o.x,dy=p.y-o.y;const L=Math.hypot(dx,dy)||1;return {x:dx/L*d,y:dy/L*d};}
+
+/* ---------- content ---------- */
+const steps=[
+ {t:"Setup",d:"Three equal circles, each of radius <b>r</b>, all pass through one point <b>O</b>. So every center C₁, C₂, C₃ lies at distance r from O."},
+ {t:"The other intersections",d:"Each pair of circles meets at O and at one more point: circles 2 &amp; 3 at <b>P₁</b>, circles 3 &amp; 1 at <b>P₂</b>, circles 1 &amp; 2 at <b>P₃</b>. The goal is the circle through P₁, P₂, P₃."},
+ {t:"First rhombus",d:"Join O, C₂, P₁, C₃. All four sides equal r, so the quadrilateral is a rhombus — giving <b>C₂P₁ ∥ OC₃</b>.",
+  n:{title:"Why O C₂ P₁ C₃ is truly a rhombus",
+     body:`<ol><li><b>Equal sides.</b> Each side is a radius: C₂O = OC₃ = C₃P₁ = P₁C₂ = r. A quadrilateral with four equal sides is, by definition, a rhombus.</li>
+     <li><b>Parallel sides.</b> Draw the diagonal OP₁. It splits the figure into △OC₂P₁ and △OC₃P₁, congruent by <b>SSS</b> (two sides = r, plus the shared OP₁). Triangle OC₂P₁ is isosceles, so ∠C₂P₁O = ∠C₂OP₁; and the congruence makes OP₁ bisect ∠C₂OC₃, so ∠C₂OP₁ = ∠C₃OP₁. Hence ∠C₂P₁O = ∠C₃OP₁ — equal <b>alternate interior angles</b> across the transversal OP₁ — which forces C₂P₁ ∥ OC₃.</li></ol>`}},
+ {t:"Second rhombus",d:"The identical argument on O, C₃, P₂, C₁ gives a second rhombus, so <b>C₁P₂ ∥ OC₃</b> as well.",
+  n:{title:"Why O C₃ P₂ C₁ is truly a rhombus",
+     body:`<ol><li><b>Equal sides.</b> Again every side is a radius: C₁O = OC₃ = C₃P₂ = P₂C₁ = r. Four equal sides ⇒ a rhombus.</li>
+     <li><b>Parallel sides.</b> Draw the diagonal OP₂. It splits the figure into △OC₃P₂ and △OC₁P₂, congruent by <b>SSS</b>. Triangle OC₁P₂ is isosceles, so ∠C₁P₂O = ∠C₁OP₂; and the congruence makes OP₂ bisect ∠C₁OC₃, so ∠C₁OP₂ = ∠C₃OP₂. Therefore ∠C₁P₂O = ∠C₃OP₂ — equal <b>alternate interior angles</b> across transversal OP₂ — proving C₁P₂ ∥ OC₃.</li></ol>`}},
+ {t:"A parallelogram",d:"C₂P₁ and C₁P₂ are both equal and parallel to OC₃, hence to each other. So C₁C₂P₁P₂ is a parallelogram, which means <b>P₁P₂ = C₁C₂</b>.",
+  n:{title:"Equal + parallel sides ⇒ a parallelogram",
+     body:`<p style="margin:0 0 9px;font-size:14.5px;color:#3a372f;"><b>General fact:</b> whenever two segments are equal and parallel, joining their endpoints produces a parallelogram — this step is exactly that move.</p><ol><li><b>The equal, parallel pair.</b> From the two rhombi, C₂P₁ and C₁P₂ each equal OC₃, so they are equal in length and parallel (gold). In the quadrilateral C₁C₂P₁P₂ they form one pair of opposite sides.</li>
+     <li><b>Closing it up.</b> Draw the diagonal C₂P₂. Since C₂P₁ ∥ C₁P₂, the alternate interior angles ∠P₁C₂P₂ = ∠C₁P₂C₂. With C₂P₁ = C₁P₂ and the shared diagonal C₂P₂, triangles C₂P₁P₂ and P₂C₁C₂ are congruent by <b>SAS</b>. So the remaining sides match and stay parallel: P₁P₂ = C₁C₂ (green) — precisely what makes C₁C₂P₁P₂ a parallelogram.</li></ol>`}},
+ {t:"Congruent triangles",d:"Repeating on every side gives P₂P₃ = C₂C₃ and P₃P₁ = C₃C₁ too. All three sides match, so <b>△P₁P₂P₃ ≅ △C₁C₂C₃</b> — and congruent triangles have congruent circumcircles."},
+ {t:"Circumcircle of the centers",d:"Since OC₁ = OC₂ = OC₃ = r, the circumcircle of △C₁C₂C₃ is centered at O with radius r — <b>equal to each given circle</b>."},
+ {t:"Conclusion",d:"So the circumcircle of △P₁P₂P₃ is also of radius r. The circle through the three other intersections equals each original circle. <b>∎</b>"}
+];
+
+/* ---------- render ---------- */
+const cv=document.getElementById('cv');
+let step=0;
+
+function figure(){
+  let s='';
+  const big=step<=1, late=step>=5;
+  const sw=big?2.4:(late?1:1.4), fo=late?0.05:0.08;
+  Cs.forEach((c,i)=>{s+=cir(c,rs,CC[i],fo,CC[i],sw);});
+
+  /* congruent triangles */
+  if(step>=5){
+    s+=poly(Cs,'none',0,GRY,step===5?2.2:1.4);
+    s+=poly(Ps,PCOL,0.07,PCOL,step===5?2.4:1.7);
+  }
+  /* circumcircle of centers */
+  if(step>=6){ s+=cir(Os,rs,'none',null,RED,step===6?2.3:1.5,'6 5'); }
+
+  /* rhombus steps with full reasoning overlay */
+  if(step===2||step===3){
+    let rh,dia,t1,t2,par1a,par1b,par2a,par2b,av1A,av1B,av2A;
+    if(step===2){
+      rh=[Os,Cs[1],Ps[0],Cs[2]]; dia=Ps[0];
+      t1=[Os,Cs[1],Ps[0]]; t2=[Os,Cs[2],Ps[0]];
+      par1a=Cs[1]; par1b=Ps[0]; par2a=Os; par2b=Cs[2];   // C2P1 ∥ OC3
+      av1A=Cs[1]; av1B=Os;                                // ∠C2P1O at P1
+      av2A=Cs[2];                                          // ∠C3OP1 at O
+    }else{
+      rh=[Os,Cs[2],Ps[1],Cs[0]]; dia=Ps[1];
+      t1=[Os,Cs[2],Ps[1]]; t2=[Os,Cs[0],Ps[1]];
+      par1a=Cs[0]; par1b=Ps[1]; par2a=Os; par2b=Cs[2];   // C1P2 ∥ OC3
+      av1A=Cs[0]; av1B=Os;                                // ∠C1P2O at P2
+      av2A=Cs[2];                                          // ∠C3OP2 at O
+    }
+    /* two sub-triangles split by the diagonal */
+    s+=poly(t1,'#E8A33D',0.10,'none',0);
+    s+=poly(t2,'#5B9BD5',0.10,'none',0);
+    /* rhombus outline */
+    s+=poly(rh,'none',0,HL,2.4);
+    /* equal-side ticks */
+    for(let i=0;i<4;i++) s+=tick(rh[i],rh[(i+1)%4],'#caa24a');
+    /* the diagonal (transversal) */
+    s+=ln(Os,dia,'#cfc9bb',1.8,'5 4');
+    /* the two parallel sides, emphasized */
+    s+=ln(par1a,par1b,GOLD,3.4);
+    s+=ln(par2a,par2b,GOLD,3.4);
+    /* equal alternate-interior angle marks (double arcs) */
+    s+=arc(dia,av1A,av1B,20,GOLD,true);   // angle at P
+    s+=arc(Os,av2A,dia,20,GOLD,true);     // angle at O
+  }
+
+  /* parallelogram step: equal & parallel pair => parallelogram lemma */
+  if(step===4){
+    const tA=[Cs[1],Ps[0],Ps[1]];      // triangle C2 P1 P2
+    const tB=[Cs[1],Ps[1],Cs[0]];      // triangle C2 P2 C1
+    s+=poly(tA,'#E8A33D',0.10,'none',0);
+    s+=poly(tB,'#5B9BD5',0.10,'none',0);
+    s+=poly([Cs[0],Cs[1],Ps[0],Ps[1]],'none',0,HL,2.3);
+    /* diagonal C2P2 as transversal */
+    s+=ln(Cs[1],Ps[1],'#cfc9bb',1.8,'5 4');
+    /* given equal+parallel pair C2P1 & C1P2 — gold, single tick */
+    s+=ln(Cs[1],Ps[0],GOLD,3.4)+tickN(Cs[1],Ps[0],'#caa24a',1);
+    s+=ln(Cs[0],Ps[1],GOLD,3.4)+tickN(Cs[0],Ps[1],'#caa24a',1);
+    /* concluded equal+parallel pair C1C2 & P1P2 — green, double tick */
+    s+=ln(Cs[0],Cs[1],PCOL,3)+tickN(Cs[0],Cs[1],PCOL,2);
+    s+=ln(Ps[0],Ps[1],PCOL,3)+tickN(Ps[0],Ps[1],PCOL,2);
+    /* equal alternate interior angles at C2 and P2 */
+    s+=arc(Cs[1],Ps[0],Ps[1],20,GOLD,true);
+    s+=arc(Ps[1],Cs[0],Cs[1],20,GOLD,true);
+  }
+  /* final equal circle */
+  if(step===7){ s+=cir(Ss,rs,RED,0.06,RED,3); }
+
+  /* points + labels (on top) */
+  s+=dot(Os,5,OCOL)+txt(Os,'O',OCOL,8,-7);
+  Cs.forEach((c,i)=>{const o=outw(c,Os,19);s+=dot(c,4.5,CC[i])+txt(c,'C'+['₁','₂','₃'][i],CC[i],o.x,o.y+5);});
+  if(step>=1)Ps.forEach((p,i)=>{const o=outw(p,Os,19);s+=dot(p,5,PCOL)+txt(p,'P'+['₁','₂','₃'][i],PCOL,o.x,o.y+5);});
+  if(step===7)s+=dot(Ss,4,RED);
+  return s;
+}
+function arrow(a,b,col){let dx=b.x-a.x,dy=b.y-a.y;const L=Math.hypot(dx,dy)||1;dx/=L;dy/=L;const nx=-dy,ny=dx,sz=8;const p1={x:b.x-dx*sz+nx*sz*0.55,y:b.y-dy*sz+ny*sz*0.55},p2={x:b.x-dx*sz-nx*sz*0.55,y:b.y-dy*sz-ny*sz*0.55};return `<polygon points="${b.x.toFixed(1)},${b.y.toFixed(1)} ${p1.x.toFixed(1)},${p1.y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}" fill="${col}"/>`;}
+
+const snum=document.getElementById('snum'),stitle=document.getElementById('stitle'),
+ sdesc=document.getElementById('sdesc'),noteBox=document.getElementById('note'),
+ ntitle=document.getElementById('ntitle'),nbody=document.getElementById('nbody'),
+ prev=document.getElementById('prev'),next=document.getElementById('next'),dots=document.getElementById('dots');
+
+steps.forEach((_,i)=>{const b=document.createElement('button');b.className='dot';b.setAttribute('aria-label','Step '+(i+1));b.addEventListener('click',()=>go(i));dots.appendChild(b);});
+
+function render(){
+  cv.style.opacity=0;
+  setTimeout(()=>{ cv.innerHTML=figure(); cv.style.opacity=1; },120);
+  snum.textContent=step+1;
+  stitle.textContent=steps[step].t;
+  sdesc.innerHTML=steps[step].d;
+  if(steps[step].n){ noteBox.hidden=false; ntitle.textContent=steps[step].n.title; nbody.innerHTML=steps[step].n.body; }
+  else noteBox.hidden=true;
+  prev.disabled=step===0; next.disabled=step===steps.length-1;
+  [...dots.children].forEach((d,i)=>d.classList.toggle('on',i===step));
+}
+function go(i){ step=Math.max(0,Math.min(steps.length-1,i)); render(); }
+prev.addEventListener('click',()=>go(step-1));
+next.addEventListener('click',()=>go(step+1));
+document.addEventListener('keydown',e=>{ if(e.key==='ArrowRight')go(step+1); if(e.key==='ArrowLeft')go(step-1); });
+cv.innerHTML=figure(); render();
+})();
+
+/* ===== interactive sandbox ===== */
+(function(){
+  let RC={x:280,y:280}, RR=250, showTri=false;
+  const ccol=['#5B9BD5','#42C29A','#B58BE6'];
+  const RED='#E5564B', GOLD='#F2C14E', GRN='#8BD450';
+  let C=[];
+  function johnsonArr(){const out=[];for(let kk=0;kk<3;kk++){const a=kk*2*Math.PI/3;out.push({x:280+95*Math.sin(a),y:280-95*Math.cos(a),r:95});}return out;}
+  const cv=document.getElementById('sbcv');
+  const marks=document.getElementById('sb_marks');
+  const triBtn=document.getElementById('sb_tri');
+  const cntEl=document.getElementById('sb_cnt');
+  const sliders=['sb_r0','sb_r1','sb_r2'].map(id=>document.getElementById(id));
+  function setSliders(v){sliders.forEach(s=>s.value=v);}
+  function clamp(c){const dx=c.x-RC.x,dy=c.y-RC.y,d=Math.hypot(dx,dy),max=RR-c.r;if(d>max&&d>0){c.x=RC.x+dx/d*max;c.y=RC.y+dy/d*max;}}
+  function inter(a,b){const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy);if(d>a.r+b.r||d<Math.abs(a.r-b.r)||d===0)return[];const aa=(a.r*a.r-b.r*b.r+d*d)/(2*d),h2=a.r*a.r-aa*aa;if(h2<0)return[];const h=Math.sqrt(h2),mx=a.x+aa*dx/d,my=a.y+aa*dy/d;return[{x:mx+h*dy/d,y:my-h*dx/d},{x:mx-h*dy/d,y:my+h*dx/d}];}
+  function refTri(){const G={x:(C[0].x+C[1].x+C[2].x)/3,y:(C[0].y+C[1].y+C[2].y)/3};const pairs=[[0,1],[0,2],[1,2]],pts=[];for(const [i,j] of pairs){const ps=inter(C[i],C[j]);if(!ps.length)continue;let pick=ps[0];if(ps.length>1){const d0=Math.hypot(ps[0].x-G.x,ps[0].y-G.y),d1=Math.hypot(ps[1].x-G.x,ps[1].y-G.y);pick=d1>d0?ps[1]:ps[0];}pts.push(pick);}return pts;}
+  function apollonius(){const [C0,C1,C2]=C;const a1=2*(C1.x-C0.x),b1=2*(C1.y-C0.y),c1=2*(C1.r-C0.r);const a2=2*(C2.x-C0.x),b2=2*(C2.y-C0.y),c2=2*(C2.r-C0.r);const d1=(C0.r*C0.r-C1.r*C1.r)+(C1.x*C1.x+C1.y*C1.y-C0.x*C0.x-C0.y*C0.y);const d2=(C0.r*C0.r-C2.r*C2.r)+(C2.x*C2.x+C2.y*C2.y-C0.x*C0.x-C0.y*C0.y);const det=a1*b2-a2*b1;if(Math.abs(det)<1e-6)return null;const px=(d1*b2-d2*b1)/det,qx=(c1*b2-c2*b1)/det,py=(a1*d2-a2*d1)/det,qy=(a1*c2-a2*c1)/det;const ex=px-C0.x,ey=py-C0.y;const A=qx*qx+qy*qy-1,B=2*(ex*qx+ey*qy+C0.r),Cc=ex*ex+ey*ey-C0.r*C0.r;let roots=[];if(Math.abs(A)<1e-9){if(Math.abs(B)>1e-9)roots.push(-Cc/B);}else{const disc=B*B-4*A*Cc;if(disc>=0){const sq=Math.sqrt(disc);roots.push((-B+sq)/(2*A));roots.push((-B-sq)/(2*A));}}let best=null;for(const R of roots){if(!(R>0))continue;const X={x:px+qx*R,y:py+qy*R};let ok=true;for(const c of C){const dd=Math.hypot(X.x-c.x,X.y-c.y);if(dd+c.r>R+0.5||R-c.r<-0.5){ok=false;break;}}if(ok&&(!best||R<best.r))best={x:X.x,y:X.y,r:R};}return best;}
+  function safeEnclose(){const pairs=[[0,1],[0,2],[1,2]];let best=null;for(const [i,j] of pairs){const Ci=C[i],Cj=C[j],dx=Cj.x-Ci.x,dy=Cj.y-Ci.y,d=Math.hypot(dx,dy);let cx,cy,R;if(d+Math.min(Ci.r,Cj.r)<=Math.max(Ci.r,Cj.r)){const big=Ci.r>=Cj.r?Ci:Cj;cx=big.x;cy=big.y;R=big.r;}else{const ux=dx/d,uy=dy/d;cx=((Ci.x-Ci.r*ux)+(Cj.x+Cj.r*ux))/2;cy=((Ci.y-Ci.r*uy)+(Cj.y+Cj.r*uy))/2;R=(d+Ci.r+Cj.r)/2;}const kk=3-i-j,ck=C[kk],dd=Math.hypot(cx-ck.x,cy-ck.y);if(dd+ck.r<=R+0.5&&(!best||R<best.r))best={x:cx,y:cy,r:R};}if(best)return best;const cx=(C[0].x+C[1].x+C[2].x)/3,cy=(C[0].y+C[1].y+C[2].y)/3;let R=0;for(const c of C)R=Math.max(R,Math.hypot(cx-c.x,cy-c.y)+c.r);return{x:cx,y:cy,r:R};}
+  function fit(){const a=apollonius();const res=a||safeEnclose();RC={x:res.x,y:res.y};RR=res.r;C.forEach(clamp);render();}
+  function render(){
+    let s=`<circle cx="${RC.x.toFixed(1)}" cy="${RC.y.toFixed(1)}" r="${RR.toFixed(1)}" fill="none" stroke="${RED}" stroke-width="2.5"/>`;
+    if(marks.checked)s+=`<polygon points="${C.map(c=>c.x.toFixed(1)+','+c.y.toFixed(1)).join(' ')}" fill="none" stroke="#5b5e66" stroke-width="1" stroke-dasharray="4 4"/>`;
+    C.forEach((c,i)=>{s+=`<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="${c.r}" fill="${ccol[i]}" fill-opacity="0.18" stroke="${ccol[i]}" stroke-width="2"/>`;});
+    if(showTri){const pts=refTri();if(pts.length===3)s+=`<polygon points="${pts.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ')}" fill="${GRN}" fill-opacity="0.10" stroke="${GRN}" stroke-width="2.5" stroke-linejoin="round"/>`;else if(pts.length===2)s+=`<line x1="${pts[0].x.toFixed(1)}" y1="${pts[0].y.toFixed(1)}" x2="${pts[1].x.toFixed(1)}" y2="${pts[1].y.toFixed(1)}" stroke="${GRN}" stroke-width="2.5"/>`;pts.forEach(p=>{s+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="5" fill="${GRN}"/>`;});}
+    C.forEach((c,i)=>{s+=`<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="3.5" fill="${ccol[i]}"/>`;});
+    let n=0;const pairs=[[0,1],[0,2],[1,2]];pairs.forEach(([i,j])=>{const pts=inter(C[i],C[j]);n+=pts.length;if(marks.checked)pts.forEach(p=>{s+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" fill="${GOLD}" stroke="#7a5a12" stroke-width="1"/>`;});});
+    cntEl.textContent=n;cv.innerHTML=s;
+  }
+  function toSVG(e){const rct=cv.getBoundingClientRect(),sc=560/rct.width;return{x:(e.clientX-rct.left)*sc,y:(e.clientY-rct.top)*sc};}
+  let drag=-1,off={x:0,y:0};
+  cv.addEventListener('pointerdown',e=>{const p=toSVG(e);let best=-1,bd=1e9;C.forEach((c,i)=>{const d=Math.hypot(p.x-c.x,p.y-c.y);if(d<=c.r+8&&d<bd){bd=d;best=i;}});if(best>=0){drag=best;off={x:C[best].x-p.x,y:C[best].y-p.y};cv.setPointerCapture(e.pointerId);cv.style.cursor='grabbing';}});
+  cv.addEventListener('pointermove',e=>{if(drag<0)return;const p=toSVG(e);C[drag].x=p.x+off.x;C[drag].y=p.y+off.y;clamp(C[drag]);render();});
+  function endDrag(){drag=-1;cv.style.cursor='grab';}
+  cv.addEventListener('pointerup',endDrag);cv.addEventListener('pointercancel',endDrag);
+  sliders.forEach((sl,i)=>sl.addEventListener('input',e=>{C[i].r=+e.target.value;clamp(C[i]);render();}));
+  function loadDefault(){RC={x:280,y:280};RR=250;C=johnsonArr();setSliders(95);render();}
+  document.getElementById('sb_johnson').addEventListener('click',loadDefault);
+  document.getElementById('sb_reset').addEventListener('click',loadDefault);
+  document.getElementById('sb_fit').addEventListener('click',fit);
+  triBtn.addEventListener('click',()=>{showTri=!showTri;triBtn.classList.toggle('on',showTri);render();});
+  marks.addEventListener('change',render);
+  C=johnsonArr();render();
+})();
+</script>
+</body>
+</html>
