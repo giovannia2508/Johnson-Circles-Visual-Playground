@@ -53,6 +53,12 @@
   .tab-panel{animation:fadein .35s ease both;}
   /* sandbox controls */
   .sb-controls{display:flex; flex-direction:column; gap:16px; margin-top:6px;}
+  .sb-demo{border-left:3px solid var(--accent2); background:linear-gradient(180deg,rgba(31,107,74,.09),rgba(31,107,74,.03));
+    border-radius:0 12px 12px 0; padding:12px 14px; display:flex; flex-direction:column; gap:10px; align-items:flex-start;}
+  .sb-demo-txt{font-size:14.5px; color:#3a372f; line-height:1.5;}
+  .sb-demo-txt b{color:var(--accent2); font-weight:600;}
+  .sb-demo.paused{border-left-color:var(--line); background:var(--paper2);}
+  .sb-demo.paused .sb-demo-txt b{color:var(--ink);}
   .sb-row{display:flex; flex-wrap:wrap; gap:10px; align-items:center;}
   .sb-slider{display:flex; align-items:center; gap:7px;}
   .sb-swatch{width:12px; height:12px; border-radius:50%; display:inline-block;}
@@ -149,6 +155,10 @@
         <h2 style="font-family:'Fraunces',serif;font-weight:600;font-size:23px;margin:0 0 4px;">Move the circles</h2>
         <p style="font-size:17.5px;color:#33302a;margin:0 0 4px;max-width:46ch;">See the theorem live: three equal circles through a point, the circle that wraps them, and the triangle on their outer crossings.</p>
         <div class="sb-controls">
+          <div class="sb-demo" id="sb_demo">
+            <span class="sb-demo-txt" id="sb_demotxt">Watch one circle orbit: notice how the dashed triangle of <b>centers</b> and the green triangle of <b>intersections</b> stay the same shape — they are always congruent.</span>
+            <button class="sb-btn accent" id="sb_play">Stop &amp; try it yourself</button>
+          </div>
           <div class="sb-row">
             <span class="sb-slider"><span class="sb-swatch" style="background:#5B9BD5"></span><input type="range" min="25" max="150" value="95" id="sb_r0" aria-label="Circle 1 radius"></span>
             <span class="sb-slider"><span class="sb-swatch" style="background:#42C29A"></span><input type="range" min="25" max="150" value="95" id="sb_r1" aria-label="Circle 2 radius"></span>
@@ -364,46 +374,69 @@ cv.innerHTML=figure(); render();
 
 /* ===== interactive sandbox ===== */
 (function(){
-  let RC={x:280,y:280}, RR=250, showTri=false;
+  const O0={x:280,y:280}, R0=95;
+  let RC={x:280,y:280}, RR=250, showTri=true;
   const ccol=['#5B9BD5','#42C29A','#B58BE6'];
-  const RED='#E5564B', GOLD='#F2C14E', GRN='#8BD450';
+  const RED='#E5564B', GOLD='#F2C14E', GRN='#8BD450', CTRI='#E8A33D', CREAM='#F4F1EA';
   let C=[];
-  function johnsonArr(){const out=[];for(let kk=0;kk<3;kk++){const a=kk*2*Math.PI/3;out.push({x:280+95*Math.sin(a),y:280-95*Math.cos(a),r:95});}return out;}
+  function johnsonArr(){const out=[];for(let kk=0;kk<3;kk++){const a=kk*2*Math.PI/3;out.push({x:O0.x+R0*Math.sin(a),y:O0.y-R0*Math.cos(a),r:R0});}return out;}
   const cv=document.getElementById('sbcv');
   const marks=document.getElementById('sb_marks');
   const triBtn=document.getElementById('sb_tri');
   const cntEl=document.getElementById('sb_cnt');
+  const demoBox=document.getElementById('sb_demo'), demoTxt=document.getElementById('sb_demotxt'), playBtn=document.getElementById('sb_play');
   const sliders=['sb_r0','sb_r1','sb_r2'].map(id=>document.getElementById(id));
   function setSliders(v){sliders.forEach(s=>s.value=v);}
+  function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
   function clamp(c){const dx=c.x-RC.x,dy=c.y-RC.y,d=Math.hypot(dx,dy),max=RR-c.r;if(d>max&&d>0){c.x=RC.x+dx/d*max;c.y=RC.y+dy/d*max;}}
   function inter(a,b){const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy);if(d>a.r+b.r||d<Math.abs(a.r-b.r)||d===0)return[];const aa=(a.r*a.r-b.r*b.r+d*d)/(2*d),h2=a.r*a.r-aa*aa;if(h2<0)return[];const h=Math.sqrt(h2),mx=a.x+aa*dx/d,my=a.y+aa*dy/d;return[{x:mx+h*dy/d,y:my-h*dx/d},{x:mx-h*dy/d,y:my+h*dx/d}];}
-  function refTri(){const G={x:(C[0].x+C[1].x+C[2].x)/3,y:(C[0].y+C[1].y+C[2].y)/3};const pairs=[[0,1],[0,2],[1,2]],pts=[];for(const [i,j] of pairs){const ps=inter(C[i],C[j]);if(!ps.length)continue;let pick=ps[0];if(ps.length>1){const d0=Math.hypot(ps[0].x-G.x,ps[0].y-G.y),d1=Math.hypot(ps[1].x-G.x,ps[1].y-G.y);pick=d1>d0?ps[1]:ps[0];}pts.push(pick);}return pts;}
-  function apollonius(){const [C0,C1,C2]=C;const a1=2*(C1.x-C0.x),b1=2*(C1.y-C0.y),c1=2*(C1.r-C0.r);const a2=2*(C2.x-C0.x),b2=2*(C2.y-C0.y),c2=2*(C2.r-C0.r);const d1=(C0.r*C0.r-C1.r*C1.r)+(C1.x*C1.x+C1.y*C1.y-C0.x*C0.x-C0.y*C0.y);const d2=(C0.r*C0.r-C2.r*C2.r)+(C2.x*C2.x+C2.y*C2.y-C0.x*C0.x-C0.y*C0.y);const det=a1*b2-a2*b1;if(Math.abs(det)<1e-6)return null;const px=(d1*b2-d2*b1)/det,qx=(c1*b2-c2*b1)/det,py=(a1*d2-a2*d1)/det,qy=(a1*c2-a2*c1)/det;const ex=px-C0.x,ey=py-C0.y;const A=qx*qx+qy*qy-1,B=2*(ex*qx+ey*qy+C0.r),Cc=ex*ex+ey*ey-C0.r*C0.r;let roots=[];if(Math.abs(A)<1e-9){if(Math.abs(B)>1e-9)roots.push(-Cc/B);}else{const disc=B*B-4*A*Cc;if(disc>=0){const sq=Math.sqrt(disc);roots.push((-B+sq)/(2*A));roots.push((-B-sq)/(2*A));}}let best=null;for(const R of roots){if(!(R>0))continue;const X={x:px+qx*R,y:py+qy*R};let ok=true;for(const c of C){const dd=Math.hypot(X.x-c.x,X.y-c.y);if(dd+c.r>R+0.5||R-c.r<-0.5){ok=false;break;}}if(ok&&(!best||R<best.r))best={x:X.x,y:X.y,r:R};}return best;}
+  function radicalCenter(){const k=C.map(c=>c.x*c.x+c.y*c.y-c.r*c.r);const a1=2*(C[1].x-C[0].x),b1=2*(C[1].y-C[0].y),e1=k[1]-k[0];const a2=2*(C[2].x-C[0].x),b2=2*(C[2].y-C[0].y),e2=k[2]-k[0];const det=a1*b2-a2*b1;if(Math.abs(det)<1e-6)return null;return {x:(e1*b2-e2*b1)/det,y:(a1*e2-a2*e1)/det};}
+  function refTri(){const rc=radicalCenter()||{x:(C[0].x+C[1].x+C[2].x)/3,y:(C[0].y+C[1].y+C[2].y)/3};const pairs=[[0,1],[0,2],[1,2]],pts=[];for(const [i,j] of pairs){const ps=inter(C[i],C[j]);if(!ps.length){pts.push(null);continue;}let pick=ps[0];if(ps.length>1){pick=dist(ps[1],rc)>dist(ps[0],rc)?ps[1]:ps[0];}pts.push(pick);}return pts;}
+  function circumR(A,B,D){const a=dist(B,D),b=dist(A,D),c=dist(A,B);const area=Math.abs((B.x-A.x)*(D.y-A.y)-(D.x-A.x)*(B.y-A.y))/2;if(area<1e-6)return Infinity;return a*b*c/(4*area);}
+  function congruent(){const rr=C.map(c=>c.r),rmin=Math.min.apply(null,rr),rmax=Math.max.apply(null,rr);if(rmax-rmin>2.5)return false;const Rc=circumR(C[0],C[1],C[2]);return Math.abs(Rc-(rmin+rmax)/2)<3.5;}
+  function tickN(a,b,col,n){let dx=b.x-a.x,dy=b.y-a.y;const L=Math.hypot(dx,dy)||1;dx/=L;dy/=L;const nx=-dy,ny=dx;const mx=(a.x+b.x)/2,my=(a.y+b.y)/2;let s='';for(let i=0;i<n;i++){const off=(i-(n-1)/2)*4.5;const cx=mx+dx*off,cy=my+dy*off;s+=`<line x1="${(cx-nx*5).toFixed(1)}" y1="${(cy-ny*5).toFixed(1)}" x2="${(cx+nx*5).toFixed(1)}" y2="${(cy+ny*5).toFixed(1)}" stroke="${col}" stroke-width="2"/>`;}return s;}
+  function apollonius(){const [C0,C1,C2]=C;const a1=2*(C1.x-C0.x),b1=2*(C1.y-C0.y),c1=2*(C1.r-C0.r);const a2=2*(C2.x-C0.x),b2=2*(C2.y-C0.y),c2=2*(C2.r-C0.r);const d1=(C0.r*C0.r-C1.r*C1.r)+(C1.x*C1.x+C1.y*C1.y-C0.x*C0.x-C0.y*C0.y);const d2=(C0.r*C0.r-C2.r*C2.r)+(C2.x*C2.x+C2.y*C2.y-C0.x*C0.x-C0.y*C0.y);const det=a1*b2-a2*b1;if(Math.abs(det)<1e-6)return null;const px=(d1*b2-d2*b1)/det,qx=(c1*b2-c2*b1)/det,py=(a1*d2-a2*d1)/det,qy=(a1*c2-a2*c1)/det;const ex=px-C0.x,ey=py-C0.y;const A=qx*qx+qy*qy-1,B=2*(ex*qx+ey*qy+C0.r),Cc=ex*ex+ey*ey-C0.r*C0.r;let roots=[];if(Math.abs(A)<1e-9){if(Math.abs(B)>1e-9)roots.push(-Cc/B);}else{const disc=B*B-4*A*Cc;if(disc>=0){const sq=Math.sqrt(disc);roots.push((-B+sq)/(2*A));roots.push((-B-sq)/(2*A));}}let best=null;for(const R of roots){if(!(R>0))continue;const X={x:px+qx*R,y:py+qy*R};let ok=true;for(const c of C){const dd=dist(X,c);if(dd+c.r>R+0.5||R-c.r<-0.5){ok=false;break;}}if(ok&&(!best||R<best.r))best={x:X.x,y:X.y,r:R};}return best;}
   function safeEnclose(){const pairs=[[0,1],[0,2],[1,2]];let best=null;for(const [i,j] of pairs){const Ci=C[i],Cj=C[j],dx=Cj.x-Ci.x,dy=Cj.y-Ci.y,d=Math.hypot(dx,dy);let cx,cy,R;if(d+Math.min(Ci.r,Cj.r)<=Math.max(Ci.r,Cj.r)){const big=Ci.r>=Cj.r?Ci:Cj;cx=big.x;cy=big.y;R=big.r;}else{const ux=dx/d,uy=dy/d;cx=((Ci.x-Ci.r*ux)+(Cj.x+Cj.r*ux))/2;cy=((Ci.y-Ci.r*uy)+(Cj.y+Cj.r*uy))/2;R=(d+Ci.r+Cj.r)/2;}const kk=3-i-j,ck=C[kk],dd=Math.hypot(cx-ck.x,cy-ck.y);if(dd+ck.r<=R+0.5&&(!best||R<best.r))best={x:cx,y:cy,r:R};}if(best)return best;const cx=(C[0].x+C[1].x+C[2].x)/3,cy=(C[0].y+C[1].y+C[2].y)/3;let R=0;for(const c of C)R=Math.max(R,Math.hypot(cx-c.x,cy-c.y)+c.r);return{x:cx,y:cy,r:R};}
   function fit(){const a=apollonius();const res=a||safeEnclose();RC={x:res.x,y:res.y};RR=res.r;C.forEach(clamp);render();}
   function render(){
+    const cong=congruent();
     let s=`<circle cx="${RC.x.toFixed(1)}" cy="${RC.y.toFixed(1)}" r="${RR.toFixed(1)}" fill="none" stroke="${RED}" stroke-width="2.5"/>`;
-    if(marks.checked)s+=`<polygon points="${C.map(c=>c.x.toFixed(1)+','+c.y.toFixed(1)).join(' ')}" fill="none" stroke="#5b5e66" stroke-width="1" stroke-dasharray="4 4"/>`;
+    if(marks.checked){const emph=cong&&showTri;s+=`<polygon points="${C.map(c=>c.x.toFixed(1)+','+c.y.toFixed(1)).join(' ')}" fill="none" stroke="${emph?CTRI:'#5b5e66'}" stroke-width="${emph?2.4:1}"${emph?'':' stroke-dasharray="4 4"'}/>`;}
     C.forEach((c,i)=>{s+=`<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="${c.r}" fill="${ccol[i]}" fill-opacity="0.18" stroke="${ccol[i]}" stroke-width="2"/>`;});
-    if(showTri){const pts=refTri();if(pts.length===3)s+=`<polygon points="${pts.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ')}" fill="${GRN}" fill-opacity="0.10" stroke="${GRN}" stroke-width="2.5" stroke-linejoin="round"/>`;else if(pts.length===2)s+=`<line x1="${pts[0].x.toFixed(1)}" y1="${pts[0].y.toFixed(1)}" x2="${pts[1].x.toFixed(1)}" y2="${pts[1].y.toFixed(1)}" stroke="${GRN}" stroke-width="2.5"/>`;pts.forEach(p=>{s+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="5" fill="${GRN}"/>`;});}
+    let pts=null;
+    if(showTri){pts=refTri();const good=pts.filter(Boolean);
+      if(good.length===3)s+=`<polygon points="${good.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ')}" fill="${GRN}" fill-opacity="0.10" stroke="${GRN}" stroke-width="2.5" stroke-linejoin="round"/>`;
+      else if(good.length===2)s+=`<line x1="${good[0].x.toFixed(1)}" y1="${good[0].y.toFixed(1)}" x2="${good[1].x.toFixed(1)}" y2="${good[1].y.toFixed(1)}" stroke="${GRN}" stroke-width="2.5"/>`;
+      good.forEach(p=>{s+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="5" fill="${GRN}"/>`;});}
+    if(cong&&showTri&&marks.checked&&pts&&pts[0]&&pts[1]&&pts[2]){
+      s+=tickN(C[1],C[2],CREAM,1)+tickN(pts[0],pts[1],CREAM,1);
+      s+=tickN(C[0],C[1],CREAM,2)+tickN(pts[1],pts[2],CREAM,2);
+      s+=tickN(C[2],C[0],CREAM,3)+tickN(pts[2],pts[0],CREAM,3);
+    }
     C.forEach((c,i)=>{s+=`<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="3.5" fill="${ccol[i]}"/>`;});
-    let n=0;const pairs=[[0,1],[0,2],[1,2]];pairs.forEach(([i,j])=>{const pts=inter(C[i],C[j]);n+=pts.length;if(marks.checked)pts.forEach(p=>{s+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" fill="${GOLD}" stroke="#7a5a12" stroke-width="1"/>`;});});
+    let n=0;const pairs=[[0,1],[0,2],[1,2]];pairs.forEach(([i,j])=>{const ps=inter(C[i],C[j]);n+=ps.length;if(marks.checked)ps.forEach(p=>{s+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" fill="${GOLD}" stroke="#7a5a12" stroke-width="1"/>`;});});
     cntEl.textContent=n;cv.innerHTML=s;
   }
   function toSVG(e){const rct=cv.getBoundingClientRect(),sc=560/rct.width;return{x:(e.clientX-rct.left)*sc,y:(e.clientY-rct.top)*sc};}
+  let raf=null,t=0;
+  function frame(){t+=0.013;const a0=(50*Math.PI/180)*Math.sin(t);C[0].x=O0.x+R0*Math.sin(a0);C[0].y=O0.y-R0*Math.cos(a0);render();raf=requestAnimationFrame(frame);}
+  function startAnim(){C=johnsonArr();setSliders(R0);showTri=true;marks.checked=true;triBtn.classList.add('on');fit();t=0;demoBox.classList.remove('paused');demoTxt.innerHTML='Watch one circle orbit: notice how the dashed triangle of <b>centers</b> and the green triangle of <b>intersections</b> stay the same shape — they are always congruent. Matching ticks show the equal sides.';playBtn.textContent='Stop & try it yourself';if(raf)cancelAnimationFrame(raf);raf=requestAnimationFrame(frame);}
+  function stopAnim(){if(raf){cancelAnimationFrame(raf);raf=null;}demoBox.classList.add('paused');demoTxt.innerHTML='Paused — drag the circles, resize them, or use the buttons below. The matching tick marks reappear whenever the setup is genuinely Johnson (equal circles through one point).';playBtn.textContent='Replay animation';}
+  playBtn.addEventListener('click',()=>{ if(raf) stopAnim(); else startAnim(); });
   let drag=-1,off={x:0,y:0};
-  cv.addEventListener('pointerdown',e=>{const p=toSVG(e);let best=-1,bd=1e9;C.forEach((c,i)=>{const d=Math.hypot(p.x-c.x,p.y-c.y);if(d<=c.r+8&&d<bd){bd=d;best=i;}});if(best>=0){drag=best;off={x:C[best].x-p.x,y:C[best].y-p.y};cv.setPointerCapture(e.pointerId);cv.style.cursor='grabbing';}});
+  cv.addEventListener('pointerdown',e=>{if(raf)stopAnim();const p=toSVG(e);let best=-1,bd=1e9;C.forEach((c,i)=>{const d=dist(p,c);if(d<=c.r+8&&d<bd){bd=d;best=i;}});if(best>=0){drag=best;off={x:C[best].x-p.x,y:C[best].y-p.y};cv.setPointerCapture(e.pointerId);cv.style.cursor='grabbing';}});
   cv.addEventListener('pointermove',e=>{if(drag<0)return;const p=toSVG(e);C[drag].x=p.x+off.x;C[drag].y=p.y+off.y;clamp(C[drag]);render();});
   function endDrag(){drag=-1;cv.style.cursor='grab';}
   cv.addEventListener('pointerup',endDrag);cv.addEventListener('pointercancel',endDrag);
-  sliders.forEach((sl,i)=>sl.addEventListener('input',e=>{C[i].r=+e.target.value;clamp(C[i]);render();}));
-  function loadDefault(){RC={x:280,y:280};RR=250;C=johnsonArr();setSliders(95);render();}
-  document.getElementById('sb_johnson').addEventListener('click',loadDefault);
+  sliders.forEach((sl,i)=>sl.addEventListener('input',e=>{if(raf)stopAnim();C[i].r=+e.target.value;clamp(C[i]);render();}));
+  function loadDefault(){if(raf)stopAnim();RC={x:280,y:280};RR=250;C=johnsonArr();setSliders(R0);render();}
+  function johnsonSetup(){if(raf)stopAnim();C=johnsonArr();setSliders(R0);fit();}
+  document.getElementById('sb_johnson').addEventListener('click',johnsonSetup);
   document.getElementById('sb_reset').addEventListener('click',loadDefault);
-  document.getElementById('sb_fit').addEventListener('click',fit);
-  triBtn.addEventListener('click',()=>{showTri=!showTri;triBtn.classList.toggle('on',showTri);render();});
-  marks.addEventListener('change',render);
-  C=johnsonArr();render();
+  document.getElementById('sb_fit').addEventListener('click',()=>{if(raf)stopAnim();fit();});
+  triBtn.addEventListener('click',()=>{if(raf)stopAnim();showTri=!showTri;triBtn.classList.toggle('on',showTri);render();});
+  marks.addEventListener('change',()=>{if(raf)stopAnim();render();});
+  C=johnsonArr();startAnim();
 })();
 </script>
 </body>
